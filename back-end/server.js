@@ -1,10 +1,16 @@
 const express = require('express');
 const bodyParser = require("body-parser");
-
+const session = require('express-session');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
+}));
+
+app.use(session({
+	secret: "aiwjdokdnfsld938skjdaf@%",
+	resave: true,
+	saveUninitialized: true
 }));
 
 const mongoose = require('mongoose');
@@ -28,25 +34,29 @@ const Post = mongoose.model('Post', postSchema);
 
 //creates a new post
 app.post('/api/newpost', async (req, res) => {
-  console.log("request to add a post!");
-  //creates a new db object with fields title and path.
-  
-  const post = new Post({
-    user: req.body.user,
-	message: req.body.message,
-    date: req.body.timedate,
-	likes: 0,
-	category: req.body.category
-  });
-  
-  try {
-	//saves item to db
-    await post.save();
-	
-    res.sendStatus(200);
-  } catch (error) {
-    console.log(error);
-    res.sendStatus(500);
+  if(req.session.loggedin) {	
+	  console.log("request to add a post!");
+	  //creates a new db object with fields title and path.
+	  
+	  const post = new Post({
+		user: req.session.user,
+		message: req.body.message,
+		date: req.body.timedate,
+		likes: 0,
+		category: req.body.category
+	  });
+	  
+	  try {
+		//saves item to db
+		await post.save();
+		
+		res.sendStatus(200);
+	  } catch (error) {
+		console.log(error);
+		res.sendStatus(500);
+	  }
+  } else {
+	  res.send({loggedin: false});
   }
 });
 
@@ -98,27 +108,35 @@ app.post('/api/unlike/:id', async (req, res) => {
 
 //deletes a post
 app.delete('/api/delete/:id', async (req, res) => {
-	console.log("Someone deleted a post: " + req.params.id);
-	
-	try {
-		await Post.deleteOne({_id: req.params.id});
-		res.sendStatus(200);
-	} catch (error) {
-		console.log(error);
-		res.sendStatus(500);
+	if(req.session.loggedin) {
+		console.log("Someone deleted a post: " + req.params.id);
+		
+		try {
+			await Post.deleteOne({_id: req.params.id});
+			res.sendStatus(200);
+		} catch (error) {
+			console.log(error);
+			res.sendStatus(500);
+		}
+	} else {
+		res.send({loggedin: false});
 	}
 });
 
 //updates field in db
 app.put('/api/editp/:id', async (req, res) => {
-	try {
-		var item = await Post.findOneAndUpdate({_id: req.params.id}, {message: req.body.newmessage, date: req.body.timedate}, {upsert: true}, function(err, doc) {
-			return res.sendStatus(200);
-		});
-		item.save();
-	} catch (error) {
-		console.log(error);
-		res.sendStatus(500);
+	if(req.session.loggedin) {
+		try {
+			var item = await Post.findOneAndUpdate({_id: req.params.id}, {message: req.body.newmessage, date: req.body.timedate}, {upsert: true}, function(err, doc) {
+				return res.sendStatus(200);
+			});
+			item.save();
+		} catch (error) {
+			console.log(error);
+			res.sendStatus(500);
+		}
+	} else {
+		res.send({loggedin: false});
 	}
 });
 
@@ -139,25 +157,29 @@ const Comment = mongoose.model('Comment', commentSchema);
 
 //creating comments
 app.post('/api/comments/:postid/create', async (req, res) => {
-    try {
-        let posta = await Post.findOne({_id: req.params.postid});
-        if (!posta) {
-            res.send(404);
-            return;
-        }
-        let comment = new Comment({
-            post: posta,
-			user: req.body.username,
-            message: req.body.msg,
-            date: req.body.datetime,
-			upvotes: 0
-        });
-        await comment.save();
-        res.sendStatus(200);
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(500);
-    }
+	if(req.session.loggedin) {
+		try {
+			let posta = await Post.findOne({_id: req.params.postid});
+			if (!posta) {
+				res.send(404);
+				return;
+			}
+			let comment = new Comment({
+				post: posta,
+				user: req.session.user,
+				message: req.body.msg,
+				date: req.body.datetime,
+				upvotes: 0
+			});
+			await comment.save();
+			res.sendStatus(200);
+		} catch (error) {
+			console.log(error);
+			res.sendStatus(500);
+		}
+	} else {
+		res.send({loggedin: false});
+	}
 });
 
 //get number of comments for a post
@@ -199,19 +221,26 @@ app.get('/api/comments/:postid/getall', async (req, res) => {
 
 //deleting comments
 app.delete('/api/comments/:postid/:commid', async (req, res) => {
-    try {
-        let comment = await Comment.findOne({_id:req.params.commid, post: req.params.postid});
-        if (!comment) {
-            res.send(404);
-            return;
-        }
-        await comment.delete();
-		
-        res.sendStatus(200);
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(500);
-    }
+	if(req.session.loggedin) {
+		try {
+			let comment = await Comment.findOne({_id:req.params.commid, post: req.params.postid});
+			if (!comment) {
+				res.send(404);
+				return;
+			}
+			await comment.delete();
+			
+			res.sendStatus(200);
+		} catch (error) {
+			console.log(error);
+			res.sendStatus(500);
+		}
+	} else {
+		res.send({loggedin: false});
+	}
 });
 
-app.listen(3001, () => console.log('Server listening on port 3001!'));
+const auth = require("./auth.js");
+app.use("/api/auth", auth.routes);
+
+app.listen(3000, () => console.log('Server listening on port 3000!'));

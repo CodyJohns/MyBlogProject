@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Myblog pinboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="semanui/semantic.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="jquery-3.6.0.min.js"></script>
+<script src="semanui/semantic.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script src="md5.min.js"></script>
+<script>
+  async function check() {
+    let checklogin = await axios.get('/api/auth/checklogin');
+  
+    if(checklogin.data.loggedin)
+      window.location.href = "/posts";
+  }
+  
+  check();
+  
+  $(document).ready(function(){
+    $('.ui.accordion').accordion();
+  });
+</script>
+</head>
+<body>
+<div class="mini_obj">
+<h1>Welcome to My Blog!</h1>
+<br><br>
+	<div class="ui styled fluid accordion">
+	  <div class="active title">
+		<i class="dropdown icon"></i>
+		Login
+	  </div>
+	  <div class="active content">
+	    <form action="javascript:login()">
+		<div class="fields">
+		  <div class="ui input fluid inp">
+			<input type="text" id="usern" placeholder="Username" required>
+		  </div>
+		  <div class="ui input fluid inp">
+			<input type="password" id="passw" placeholder="Password" required>
+		  </div>
+		  <button class="ui fluid button">Log in</button><br>
+		  <div id="error"></div>
+		</div>
+	    <input type="submit" style="display:none;">
+		</form>
+	  </div>
+	  <div class="title">
+		<i class="dropdown icon"></i>
+		Register
+	  </div>
+	  <div class="content">
+	    <form action="javascript:create()">
+		<div class="fields">
+		  <div class="ui input fluid inp">
+			<input type="text" id="regusern" placeholder="Username" required>
+		  </div>
+		  <div class="ui input fluid inp">
+			<input type="password" id="regpassw" placeholder="Password" required>
+		  </div>
+		  <div class="ui input fluid inp">
+			<input type="password" id="regconfpassw" placeholder="Re-type Password" required>
+		  </div>
+		  <button class="ui fluid button">Create Account</button><br>
+		  <div id="error2"></div>
+		</div>
+	    <input type="submit" style="display:none;">
+		</form>
+	  </div>
+	</div>
+</div>
+<footer>Copyright &copy; 2021. Cody Johns. <a href="https://github.com/CodyJohns/MyBlogProject">Github link</a></footer>
+<script src="auth.js"></script>
+</body>
+</html>

@@ -1,12 +1,3 @@
-<?php
-session_set_cookie_params(3600);
-session_start();
-
-if(!$_SESSION['username']) {
-	header("Location: /");
-}
-
-?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,13 +11,21 @@ if(!$_SESSION['username']) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script>
-var username = "<?php echo $_SESSION['username']; ?>";
+async function check() {
+  let checklogin = await axios.get('/api/auth/checklogin');
+  
+  if(!checklogin.data.loggedin)
+    window.location.href = "/";
+}
+  
+check();
+
 var cat = "misc";
 </script>
-<script src="webfunc.js"></script>
 </head>
 <body>
-<div id="np"><b style="cursor:pointer;">Community Pinboard</b></div><br>
+<script src="webfunc.js"></script>
+<div id="np"><b style="cursor:pointer;">Community Pinboard</b><i id="lgo" onclick="logout()">Logout</i></div><br>
 <div class="objt"><button class="ui button" id="newpostbtn">Write Post</button></div><br>
 <div class="obj" id="newpost">
 	<div class="obj_top"><b>Write something:</b></div>

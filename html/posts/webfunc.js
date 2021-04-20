@@ -1,29 +1,29 @@
 async function loadPosts() {
 	//this loads the misc category upon page load
 	try {
-		fetch('/api/' + cat)
-		.then(function(response) {
-			return response.json();
-		})
-		.then(function(data) {
+	  let res = await axios.get('/api/auth/checklogin');
+	  
+	  if(res.data.loggedin) {
+	
+	    let posts = await axios.get('/api/' + cat);
+		
+		document.getElementById("postsm").innerHTML = "";
+		document.getElementById("postsm").style.textAlign = "left"
 			
-			document.getElementById("postsm").innerHTML = "";
-			document.getElementById("postsm").style.textAlign = "left"
-			
-			if(data.length > 0) {
-				for(let ob of data) {
-					let extra = "";
-							
-					if(ob.user === username) {
-						extra = "<button class='ui compact icon button' onclick='editPost(\"" + ob._id +"\")'><i class='edit icon'></i></button><button class='ui compact red icon button' onclick='delPost(\"" + ob._id + "\")'><i class='delete icon'></i></button>";
-					}
+		if(posts.data.length > 0) {
+		  for(let ob of posts.data) {
+			let extra = "";
 					
-					document.getElementById("postsm").innerHTML += "<div class='obj' id='p" + ob._id + "'><div class='obj_top'><b>" + ob.user + " said:</b><i style='float:right;font-size:12px;padding-top:6px;'>" + ob.date + "</i></div><div class='obj_cont' id='msg" + ob._id +"'>" + ob.message + "</div><div class='obj_bottom' id='opt" + ob._id + "'><div class='ui labeled button' id='lbtn" + ob._id + "' tabindex='0'><div class='ui button' onclick='likePost(\"" + ob._id + "\")'><i class='heart icon'></i> Like</div><a class='ui basic label' id='lnum" + ob._id + "'>" + ob.likes + "</a></div>" + extra + "<b style='float:right;font-size:12px;padding-top:15px;cursor:pointer' onclick='showComments(\"" + ob._id + "\")'>Comments</b></div></div><div class='comments' id='cbox" + ob._id + "'></div>";
-				}
-			} else {
-				document.getElementById("postsm").innerHTML = "Sorry there are no posts to display. :(";
+			if(ob.user === res.data.user) {
+			  extra = "<button class='ui compact icon button' onclick='editPost(\"" + ob._id +"\")'><i class='edit icon'></i></button><button class='ui compact red icon button' onclick='delPost(\"" + ob._id + "\")'><i class='delete icon'></i></button>";
 			}
-		});
+					
+			document.getElementById("postsm").innerHTML += "<div class='obj' id='p" + ob._id + "'><div class='obj_top'><b>" + ob.user + " said:</b><i style='float:right;font-size:12px;padding-top:6px;'>" + ob.date + "</i></div><div class='obj_cont' id='msg" + ob._id +"'>" + ob.message + "</div><div class='obj_bottom' id='opt" + ob._id + "'><div class='ui labeled button' id='lbtn" + ob._id + "' tabindex='0'><div class='ui button' onclick='likePost(\"" + ob._id + "\")'><i class='heart icon'></i> Like</div><a class='ui basic label' id='lnum" + ob._id + "'>" + ob.likes + "</a></div>" + extra + "<b style='float:right;font-size:12px;padding-top:15px;cursor:pointer' onclick='showComments(\"" + ob._id + "\")'>Comments</b></div></div><div class='comments' id='cbox" + ob._id + "'></div>";
+		  }
+		} else {
+				document.getElementById("postsm").innerHTML = "Sorry there are no posts to display. :(";
+		}
+	  }
 	} catch (error) {
 		console.log(error);
 	}
@@ -32,10 +32,9 @@ async function loadPosts() {
 async function postComment(id) {
 	let mesg = $("#newc" + id).val();
 	
-	axios.post('/api/comments/' + id + '/create', {
-		username: username,
+	await axios.post('/api/comments/' + id + '/create', {
 		msg: mesg,
-		datetime: moment().format('MMMM DD, YYYY h:mm a'),
+		datetime: moment().format('MMMM DD, YYYY h:mm a')
 	});
 	
 	loadComments(id);
@@ -66,28 +65,27 @@ async function loadComments(id) {
 		
 	container.innerHTML = "";
 	
-	fetch('/api/comments/' + id + '/getall')
-	.then(function(response) {
-		return response.json();
-	})
-	.then(function(data) {
+	let res = await axios.get('/api/auth/checklogin');
+	  
+	if(res.data.loggedin) {
+	  let comments = await axios.get('/api/comments/' + id + '/getall');
 		
-		container.innerHTML += "<textarea class='writecomment' id='newc" + id + "' placeholder='Type comment here...'></textarea><button class='ui primary button' onclick='postComment(\"" + id + "\")' style='margin-left:15px;'>Post</button><button class='ui button'>Cancel</button>";
+	  container.innerHTML += "<textarea class='writecomment' id='newc" + id + "' placeholder='Type comment here...'></textarea><button class='ui primary button' onclick='postComment(\"" + id + "\")' style='margin-left:15px;'>Post</button>";
 		
-		if(data.length > 0) {
-			for(let ob of data) {
-				let extra = "";
+	  if(comments.data.length > 0) {
+		for(let ob of comments.data) {
+		  let extra = "";
 				
-				if(ob.user === username) {
-					extra = "<b onclick='delComment(\"" + id + "\", \"" + ob._id + "\")' style='color:gray;cursor:pointer;'>delete</b>";
-				}
+		  if(ob.user === res.data.user) {
+			extra = "<b onclick='delComment(\"" + id + "\", \"" + ob._id + "\")' style='color:gray;cursor:pointer;'>delete</b>";
+		  }
 				
-				container.innerHTML += "<div class='commentItem' id='comid" + ob._id + "'><b>" + ob.user + " said on " + ob.date + "</b><p>" + ob.message + "</p>" + extra + "</div>";
-			}
-		} else {
-			container.innerHTML += "<center>No one has commented yet. Be the first one!<center>";
-		}
-	});
+			container.innerHTML += "<div class='commentItem' id='comid" + ob._id + "'><b>" + ob.user + " said on " + ob.date + "</b><p>" + ob.message + "</p>" + extra + "</div>";
+		  }
+	  } else {
+		container.innerHTML += "<center>No one has commented yet. Be the first one!<center>";
+	  }
+	}
 }
 
 function selCat(c) {
@@ -177,6 +175,12 @@ async function likePost(id) {
 	}
 }
 
+async function logout() {
+	let res = await axios.delete('/api/auth/logout');
+	
+	window.location.href = "/";
+}
+
 $(document).ready(function () {
 	$("#newpostbtn").click(function() {
 		$("#newpost").toggle();
@@ -198,7 +202,6 @@ $(document).ready(function () {
 		//use axios cdn library
 		try {
 			let resp = await axios.post('/api/newpost', {
-			  user: username,
 			  message: msg,
 			  timedate: td,
 			  category: cat
